@@ -1,0 +1,110 @@
+from google.colab import drive
+drive.mount('/content/drive', force_remount=True)
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.ensemble import RandomForestClassifier
+
+
+
+# Input the file path to the Titanic dataset
+file_path = '/content/drive/MyDrive/Titanicproject/Titanic-Dataset.csv'
+# Load the dataset
+df = pd.read_csv(file_path)
+
+
+# Replacing the path with the actual path to the dataset in my Drive
+data_path = '/content/drive/MyDrive/Titanicproject/Titanic-Dataset.csv'
+# Loading the Titanic dataset
+# I am loading the dataset and examining its structure to get an overview.
+data = pd.read_csv("/content/drive/MyDrive/Titanicproject/Titanic-Dataset.csv")
+# Preview the first few rows
+#This is to assess the structure of the data
+df.head()
+
+
+# Using Exploratory Data Analysis (EDA)
+# Checking for the missing values
+print(df.isnull().sum())
+# Displaying the dataset information
+print(df.info())
+# Getting basic statistical Information
+print(df.describe())
+
+
+# Data Cleaning and Preprocessing
+# Fill missing Age with median
+# I noticed the 'age' had some missing values which i replaced with the median to avoid being influenced by very young or old passengers
+if 'Age' in df.columns:
+    df['Age'] = df['Age'].fillna(df['Age'].median())
+# Check for missing values in the 'Embarked' column
+print(df['Embarked'].isnull().sum())
+# Get the mode of the 'Embarked' column (most frequent value)
+mode_embarked = df['Embarked'].mode()
+# Check if mode is empty (in rare cases, the mode might not exist)
+if not mode_embarked.empty:
+    # Fill missing values with the most frequent value (mode)
+    df['Embarked'].fillna(mode_embarked[0], inplace=True)
+else:
+    print("No mode value found in 'Embarked' column.")
+# Drop Cabin column if it exists
+# Dropping the 'Cabin' column due to too many missing values and lack of relevance for now
+if 'Cabin' in df.columns:
+    df = df.drop(columns=['Cabin'])
+
+
+# Using Feature Engineering
+# I’ll convert categorical columns like 'Sex' and 'Embarked' into numeric values (encoding them).
+if 'Sex' in df.columns:
+    df['Sex'] = df['Sex'].map({'male': 0, 'female': 1})  # Convert Gender to binary
+if 'Embarked' in df.columns:
+    df['Embarked'] = df['Embarked'].map({'C': 0, 'Q': 1, 'S': 2})  # Convert Embarked to numeric
+
+
+# Selecting the features and target
+features = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
+X = df[features]  # Independent variables
+y = df['Survived']  # Dependent variable (Target)
+# I chose Random Forest because it works well with both numerical and categorical data and can handle missing values better.
+rf_model = RandomForestClassifier(random_state=42, n_estimators=100)
+rf_model.fit(X_train, y_train)
+# Predictions
+# Making predictions on the test set
+y_pred = rf_model.predict(X_test)
+
+
+# Model Evaluation
+# Evaluating the model's performance by calculating accuracy and creating a confusion matrix
+print("\nAccuracy of the model:")
+print(accuracy_score(y_test, y_pred))
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+# Displaying a classification report to understand precision, recall, and F1-score
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Checking the Feature Importance
+# Checking which features had the most influence on the predictions
+# This can give us insight into what factors affected a passenger's survival probability.
+feature_importance = pd.DataFrame({
+    'Feature': X.columns,
+    'Importance': rf_model.feature_importances_
+})
+# Sorting the features by their importance
+feature_importance = feature_importance.sort_values(by='Importance', ascending=False)
+# Displaying the top 5 important features
+print("\nTop 5 Important Features for Predicting Survival:")
+print(feature_importance.head())
+
+
+# Data Visualization
+# Visualizing the feature importance for a better understanding
+plt.figure(figsize=(10, 6))
+sns.barplot(x='Importance', y='Feature', data=feature_importance)
+plt.title("Feature Importance")
+plt.show()
