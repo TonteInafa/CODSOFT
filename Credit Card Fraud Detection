@@ -1,0 +1,52 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, precision_score, recall_score, f1_score
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+
+#Load the Dataset
+data = pd.read_csv('creditcard.csv')
+
+# Inspect data
+print(data.info())
+print(data['Class'].value_counts())  # Check class imbalance
+
+
+print(y.isnull().sum())  # Check for NaN values in the target
+# Check for missing values in X
+print(pd.DataFrame(X_scaled).isnull().sum())
+
+# Drop rows with missing values
+X_cleaned = X.dropna()
+
+# OR drop columns with missing values
+X_cleaned = X.dropna(axis=1)
+# Normalize the data
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X_cleaned)
+
+# SMOTE Oversampling
+smote = SMOTE(random_state=42)
+X_resampled, y_resampled = smote.fit_resample(X_scaled, y)
+print("Resampling successful!")
+print(pd.DataFrame(X_scaled).isnull().sum())  # Should output all zeros
+
+#Split the data
+X_train, X_test, y_train, y_test = train_test_split(
+    X_resampled, y_resampled, test_size=0.2, random_state=42, stratify=y_resampled
+)
+
+#Train using Random Forest Clasasifier
+rf_model = RandomForestClassifier(random_state=42, n_estimators=100, max_depth=10)
+rf_model.fit(X_train, y_train)
+
+# Predictions
+y_pred_rf = rf_model.predict(X_test)
+
+#Evaluate the model
+print("Random Forest Metrics:")
+print(classification_report(y_test, y_pred_rf))
